@@ -9,6 +9,7 @@ import Card from './Card';
 interface GlobeProps {
   portfolioPhoto?: string | null;
   customBadge?: string | null;
+  autoRotate?: boolean;
   rotationState: React.MutableRefObject<{ x: number, y: number }>;
   velocityState: React.MutableRefObject<{ x: number, y: number }>;
   isDragging: React.MutableRefObject<boolean>;
@@ -21,6 +22,7 @@ interface GlobeProps {
 export default function Globe({ 
   portfolioPhoto, 
   customBadge,
+  autoRotate = true,
   rotationState, 
   velocityState, 
   isDragging, 
@@ -57,7 +59,7 @@ export default function Globe({
       velocityState.current.y *= 0.93;
 
       // Ambient Idle Rotation
-      if (Date.now() - lastInteraction.current > 1800) {
+      if (autoRotate && Date.now() - lastInteraction.current > 1800) {
         // Smooth architectural spin
         velocityState.current.y += 0.00012; 
       }

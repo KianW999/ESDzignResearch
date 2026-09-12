@@ -23,10 +23,18 @@ function CameraController({ targetZ }: { targetZ: React.MutableRefObject<number>
 interface GalleryGlobeProps {
   portfolioPhoto?: string | null;
   customBadge?: string | null;
+  autoRotate?: boolean;
+  resetSignal?: number;
   onSelect: (project: OfficeProject) => void;
 }
 
-export default function GalleryGlobe({ portfolioPhoto, customBadge, onSelect }: GalleryGlobeProps) {
+export default function GalleryGlobe({ 
+  portfolioPhoto, 
+  customBadge, 
+  autoRotate = true,
+  resetSignal,
+  onSelect 
+}: GalleryGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Interaction State Maps
@@ -37,6 +45,16 @@ export default function GalleryGlobe({ portfolioPhoto, customBadge, onSelect }: 
   const lastMouse = useRef({ x: 0, y: 0 });
   const lastInteractionTime = useRef(Date.now() - 3000);
   const pointerPos = useRef({ x: 0, y: 0 });
+
+  // Reset orbit handler when resetSignal increments
+  useEffect(() => {
+    if (resetSignal) {
+      targetZ.current = DEFAULT_CAMERA_Z;
+      rotationState.current = { x: 0, y: 0 };
+      velocityState.current = { x: 0, y: 0.002 };
+      lastInteractionTime.current = Date.now();
+    }
+  }, [resetSignal]);
 
   // Cursor UI state
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -112,6 +130,7 @@ export default function GalleryGlobe({ portfolioPhoto, customBadge, onSelect }: 
           <Globe 
             portfolioPhoto={portfolioPhoto}
             customBadge={customBadge}
+            autoRotate={autoRotate}
             rotationState={rotationState}
             velocityState={velocityState}
             isDragging={isDragging}

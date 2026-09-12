@@ -1,9 +1,7 @@
 {
   "name": "AnywhereGlobe",
   "description": "A 3D spherical gallery of office interior design and workplace architectural portfolio viewing. Features smooth orbit controls, momentum dragging, 48 curated workspace interiors, custom interior badges, ESG context, and detailed design dossiers.",
-  "requestFramePermissions": [
-    "camera"
-  ],
+  "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
