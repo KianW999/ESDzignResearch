@@ -63,29 +63,41 @@ export default function Card({
         ctx.fillRect(0, 0, 400, 500);
       }
 
-      // Top Header Badge: Architectural ESG / Typology tag
+      // Top Header Badge 1: LinkedIN button box
       ctx.save();
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+      const isLinkedIn = project.badge === 'LinkedIN';
+      ctx.fillStyle = isLinkedIn ? '#0A66C2' : 'rgba(15, 23, 42, 0.82)';
       const badgeText = project.badge;
-      ctx.font = '600 11px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
       const textMetrics = ctx.measureText(badgeText);
-      const badgeW = Math.max(textMetrics.width + 20, 70);
+      const badgeW = Math.max(textMetrics.width + 24, 76);
       const badgeH = 26;
       
-      // Draw rounded rectangle for badge
+      // Draw rounded rectangle for LinkedIN badge
       ctx.beginPath();
-      ctx.roundRect(16, 16, badgeW, badgeH, 4);
+      ctx.roundRect(16, 16, badgeW, badgeH, 5);
       ctx.fill();
 
-      // Badge accent dot
+      // LinkedIN Badge text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(badgeText, 25, 33);
+
+      // Top Header Badge 2: contact button box
+      const contactText = project.typology || 'contact';
+      const contactMetrics = ctx.measureText(contactText);
+      const contactW = Math.max(contactMetrics.width + 20, 64);
+      const contactX = 16 + badgeW + 8;
+
       ctx.beginPath();
-      ctx.arc(26, 29, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#34d399'; // Emerald accent
+      ctx.fillStyle = '#25D366';
+      ctx.roundRect(contactX, 16, contactW, badgeH, 5);
       ctx.fill();
 
-      // Badge text
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillText(badgeText, 36, 33);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(contactText, contactX + 11, 33);
+
       ctx.restore();
 
       // Bottom Gradient vignette for contrast
@@ -104,10 +116,10 @@ export default function Card({
       ctx.lineTo(382, 415);
       ctx.stroke();
 
-      // Studio Firm & City
+      // Studio Firm / Sub-title
       ctx.fillStyle = '#94a3b8';
       ctx.font = '500 11px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${project.firm.toUpperCase()} · ${project.city.toUpperCase()}`, 18, 432, 280);
+      ctx.fillText(project.firm, 18, 432, 360);
 
       // Project Title
       ctx.fillStyle = '#ffffff';

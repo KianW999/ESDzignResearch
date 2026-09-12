@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { 
   X, 
-  ExternalLink, 
   Leaf, 
   Building2, 
   Calendar, 
@@ -10,7 +9,10 @@ import {
   ChevronLeft, 
   ChevronRight,
   Layers,
-  Award
+  Award,
+  Linkedin,
+  Mail,
+  MessageCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { OfficeProject } from '../types';
@@ -105,16 +107,28 @@ export default function LocationDetailsScreen({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
 
-          {/* Top Architectural Badge */}
+          {/* Top Architectural Badge: LinkedIN button & contact button */}
           <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-950/85 backdrop-blur-md text-white text-[11px] font-medium tracking-wide rounded-md border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              {project.badge}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-medium tracking-wide rounded-md shadow-sm">
-              <Building2 className="w-3 h-3 text-slate-600" />
-              {project.typology}
-            </span>
+            <a
+              href="https://www.linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0A66C2] hover:bg-[#004182] text-white text-[11px] font-bold tracking-wide rounded-md transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+              title="Open LinkedIN"
+            >
+              <Linkedin className="w-3.5 h-3.5 text-white fill-current" />
+              <span>{project.badge || "LinkedIN"}</span>
+            </a>
+            <a
+              href={project.contactLink || "https://wa.me/60126185866"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] font-bold tracking-wide rounded-md shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              title="Contact on WhatsApp (wa.me/60126185866)"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-white fill-current" />
+              <span>{project.typology || "contact"}</span>
+            </a>
           </div>
 
           {/* Bottom Card Image Overlay with User's Interior Visualization Stamp */}
@@ -139,7 +153,7 @@ export default function LocationDetailsScreen({
               {project.name}
             </h2>
             <p className="text-xs text-slate-300 font-medium">
-              {project.firm} · {project.city}, {project.country}
+              {project.firm}
             </p>
           </div>
         </div>
@@ -163,7 +177,15 @@ export default function LocationDetailsScreen({
                 {project.name}
               </h1>
               <p className="text-sm font-medium text-slate-600 mt-1">
-                Architecture & Interiors by <span className="text-slate-900 font-semibold">{project.firm}</span>
+                Architecture & Interiors by{" "}
+                <a 
+                  href={`https://${project.firm.replace(/^https?:\/\//, '')}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-slate-900 hover:text-emerald-600 font-semibold underline decoration-slate-300 hover:decoration-emerald-500 transition-colors"
+                >
+                  {project.firm}
+                </a>
               </p>
             </div>
 
@@ -254,26 +276,27 @@ export default function LocationDetailsScreen({
 
           </div>
 
-          {/* Action Footer with Web Links */}
-          <div className="pt-6 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+          {/* Action Footer */}
+          <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
-              <a 
-                href={project.webLink} 
-                target="_blank" 
+              <a
+                href={project.contactLink || "https://wa.me/60126185866"}
+                target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] font-semibold rounded-lg transition-colors cursor-pointer border border-[#25D366]/30"
+                title="WhatsApp wa.me/60126185866"
               >
-                <span>Visit Firm Profile</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <MessageCircle className="w-3.5 h-3.5 text-[#128C7E]" />
+                <span>contact (wa.me/60126185866)</span>
               </a>
-              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
-                {project.city}, {project.country}
+              <span className="text-[11px] text-slate-400 font-mono">
+                {project.year}
               </span>
             </div>
 
             <button 
               onClick={onClose}
-              className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-lg transition-colors cursor-pointer"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition-colors cursor-pointer shadow-sm"
             >
               Back to 3D Globe
             </button>

@@ -15,7 +15,6 @@ import {
   Minimize2, 
   X, 
   Building2, 
-  MapPin,
   ChevronRight,
   Layers
 } from 'lucide-react';
@@ -82,30 +81,32 @@ export default function App() {
 
       if (selectedCategory === "All") return true;
       if (selectedCategory === "Biophilic") {
-        return p.typology.toLowerCase().includes("biophilic") || 
-               p.overview.toLowerCase().includes("biophilic") ||
+        return p.overview.toLowerCase().includes("biophilic") || 
                p.overview.toLowerCase().includes("garden") ||
-               p.badge.toLowerCase().includes("biophilic");
+               p.overview.toLowerCase().includes("plant") ||
+               p.designHighlights.some(d => d.toLowerCase().includes("biophilic") || d.toLowerCase().includes("garden"));
       }
       if (selectedCategory === "Headquarters") {
-        return p.typology.toLowerCase().includes("hq") || 
-               p.typology.toLowerCase().includes("headquarters") ||
+        return p.overview.toLowerCase().includes("hq") || 
+               p.overview.toLowerCase().includes("headquarters") ||
                p.name.toLowerCase().includes("hq");
       }
       if (selectedCategory === "Adaptive Reuse") {
-        return p.typology.toLowerCase().includes("reuse") || 
-               p.typology.toLowerCase().includes("adaptive") ||
+        return p.overview.toLowerCase().includes("reuse") || 
                p.overview.toLowerCase().includes("adaptive") ||
-               p.overview.toLowerCase().includes("industrial");
+               p.overview.toLowerCase().includes("industrial") ||
+               p.overview.toLowerCase().includes("historic");
       }
       if (selectedCategory === "Timber & Craft") {
-        return p.typology.toLowerCase().includes("timber") || 
-               p.materials.some(m => m.toLowerCase().includes("timber") || m.toLowerCase().includes("oak") || m.toLowerCase().includes("wood"));
+        return p.materials.some(m => m.toLowerCase().includes("timber") || m.toLowerCase().includes("oak") || m.toLowerCase().includes("wood")) ||
+               p.overview.toLowerCase().includes("timber") ||
+               p.overview.toLowerCase().includes("wood");
       }
       if (selectedCategory === "High ESG / Net Zero") {
         return p.esgRating.includes("Outstanding") || 
                p.esgRating.includes("Platinum") || 
                p.esgRating.includes("Zero") ||
+               p.esgRating.includes("Gold") ||
                p.badge.includes("LEED") ||
                p.badge.includes("BREEAM");
       }
@@ -272,7 +273,7 @@ export default function App() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search office, firm, city, or ESG..."
+                    placeholder="Search office, firm, typology, or ESG..."
                     className="w-full bg-slate-800/90 text-white pl-9 pr-4 py-2 rounded-lg border border-white/10 text-xs focus:outline-none focus:border-emerald-500 transition-colors font-sans placeholder:text-slate-500"
                   />
                   {searchQuery && (
@@ -335,10 +336,22 @@ export default function App() {
                             </span>
                           </div>
                           <div className="text-[11px] text-slate-400 truncate">
-                            {project.firm} · {project.city}
+                            {project.firm}
                           </div>
-                          <div className="text-[10px] text-slate-500 font-mono truncate">
-                            {project.badge}
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-[#0A66C2]/20 text-[#38bdf8] font-semibold text-[9px]">
+                              {project.badge}
+                            </span>
+                            <a
+                              href={project.contactLink || "https://wa.me/60126185866"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-block px-1.5 py-0.5 rounded bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#4ade80] font-semibold text-[9px] transition-colors cursor-pointer"
+                              title="WhatsApp wa.me/60126185866"
+                            >
+                              {project.typology}
+                            </a>
                           </div>
                         </div>
                       </div>

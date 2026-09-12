@@ -154,12 +154,15 @@ export default function GalleryGlobe({
         >
           <div className="flex items-center gap-2 mb-1">
             <span className="font-semibold text-sm tracking-tight text-white">{hoveredProject.name}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-medium">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-[#0A66C2] text-white font-sans font-bold">
               {hoveredProject.badge}
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-[#25D366] text-white font-sans font-bold">
+              {hoveredProject.typology}
             </span>
           </div>
           <div className="text-slate-400 text-[11px]">
-            {hoveredProject.firm} · {hoveredProject.city}, {hoveredProject.country}
+            {hoveredProject.firm}
           </div>
           <div className="text-[10px] text-slate-500 mt-0.5">
             Click to view interior design dossier

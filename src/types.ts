@@ -10,6 +10,7 @@ export interface OfficeProject {
   year: string;
   image: string;
   badge: string;
+  contactLink?: string;
   webLink: string;
   overview: string;
   esgContext: string;
