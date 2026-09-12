@@ -1,166 +1,224 @@
 import * as THREE from 'three';
 import { useMemo, useRef, useState, useEffect } from 'react';
-import { CARD_WIDTH, CARD_HEIGHT, GLOBE_RADIUS, LOCATIONS, getLandmarkImageUrl } from '../data';
-import locationInfoData from '../locationInfo.json';
+import { CARD_WIDTH, CARD_HEIGHT, GLOBE_RADIUS, getOfficeProject } from '../data';
+import { OfficeProject } from '../types';
 
 interface CardProps {
   index: number;
   position: THREE.Vector3;
   scale?: number;
-  userPhoto: string;
-  onSelect: (image: string, location: string, info: string) => void;
-  onHover?: (info: string) => void;
+  portfolioPhoto?: string | null;
+  customBadge?: string | null;
+  onSelect: (project: OfficeProject) => void;
+  onHover?: (project: OfficeProject) => void;
   onHoverOut?: () => void;
 }
 
-export default function Card({ index, position, scale = 1, userPhoto, onSelect, onHover, onHoverOut }: CardProps) {
+export default function Card({ 
+  index, 
+  position, 
+  scale = 1, 
+  portfolioPhoto, 
+  customBadge, 
+  onSelect, 
+  onHover, 
+  onHoverOut 
+}: CardProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const [cardInfo, setCardInfo] = useState<{ base64: string; location: string, info: string } | null>(null);
-  
-  // Create a default material
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  const project: OfficeProject = useMemo(() => {
+    return getOfficeProject(index);
+  }, [index]);
 
   useEffect(() => {
     let active = true;
-    const location = LOCATIONS[index % LOCATIONS.length];
-    const info = (locationInfoData as Record<string, string>)[location] || `# ${location}\n\nA breathtaking travel destination waiting to be explored.`;
-    const destinationImg = getLandmarkImageUrl(location, index);
 
-    // Initial canvas while loading
-    const initialCanvas = document.createElement('canvas');
-    initialCanvas.width = 400;
-    initialCanvas.height = 500;
-    const gCtx = initialCanvas.getContext('2d');
-    if (gCtx) {
-      gCtx.fillStyle = '#E5E5E5';
-      gCtx.fillRect(0, 0, 400, 500);
-    }
-    const initialTex = new THREE.CanvasTexture(initialCanvas);
+    // Create high-performance Canvas texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Initial placeholder background
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 400, 500);
+
+    const initialTex = new THREE.CanvasTexture(canvas);
     initialTex.minFilter = THREE.LinearMipmapLinearFilter;
     initialTex.generateMipmaps = true;
     setTexture(initialTex);
 
-    setCardInfo({ base64: destinationImg, location, info });
+    const drawCard = (userImgElement?: HTMLImageElement) => {
+      if (!active || !ctx) return;
 
-    // Load destination image
+      // Draw photo
+      ctx.clearRect(0, 0, 400, 500);
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, 0, 0, 400, 500);
+      } else {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, 400, 500);
+      }
+
+      // Top Header Badge: Architectural ESG / Typology tag
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+      const badgeText = project.badge;
+      ctx.font = '600 11px system-ui, -apple-system, sans-serif';
+      const textMetrics = ctx.measureText(badgeText);
+      const badgeW = Math.max(textMetrics.width + 20, 70);
+      const badgeH = 26;
+      
+      // Draw rounded rectangle for badge
+      ctx.beginPath();
+      ctx.roundRect(16, 16, badgeW, badgeH, 4);
+      ctx.fill();
+
+      // Badge accent dot
+      ctx.beginPath();
+      ctx.arc(26, 29, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#34d399'; // Emerald accent
+      ctx.fill();
+
+      // Badge text
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText(badgeText, 36, 33);
+      ctx.restore();
+
+      // Bottom Gradient vignette for contrast
+      const grad = ctx.createLinearGradient(0, 310, 0, 500);
+      grad.addColorStop(0, 'rgba(15, 23, 42, 0)');
+      grad.addColorStop(0.35, 'rgba(15, 23, 42, 0.65)');
+      grad.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 310, 400, 190);
+
+      // Thin architectural divider line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(18, 415);
+      ctx.lineTo(382, 415);
+      ctx.stroke();
+
+      // Studio Firm & City
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${project.firm.toUpperCase()} · ${project.city.toUpperCase()}`, 18, 432, 280);
+
+      // Project Title
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(project.name, 18, 458, 280);
+      ctx.shadowBlur = 0;
+
+      // Typology & ESG info
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '400 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${project.typology} · ${project.year}`, 18, 480, 270);
+
+      // Render custom interior badge / portfolio stamp if user provided
+      if (userImgElement && userImgElement.complete) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 12;
+        
+        // Circular stamp
+        ctx.beginPath();
+        ctx.arc(344, 448, 30, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#0f172a';
+        ctx.stroke();
+        ctx.clip();
+
+        ctx.drawImage(userImgElement, 314, 418, 60, 60);
+        ctx.restore();
+      } else if (customBadge) {
+        // Render custom badge pill at bottom-right
+        ctx.save();
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(290, 438, 94, 26, 13);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 9px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(customBadge.toUpperCase(), 337, 454, 86);
+        ctx.restore();
+      }
+
+      // Update Three.js texture
+      const newTex = new THREE.CanvasTexture(canvas);
+      newTex.minFilter = THREE.LinearMipmapLinearFilter;
+      newTex.generateMipmaps = true;
+      setTexture(newTex);
+    };
+
+    // Load project image
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = destinationImg;
+    img.src = project.image;
 
     img.onload = () => {
       if (!active) return;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 400;
-      canvas.height = 500;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Draw background landmark photo
-      ctx.drawImage(img, 0, 0, 400, 500);
-
-      // Add a stylish gradient overlay at the bottom for readability
-      const grad = ctx.createLinearGradient(0, 340, 0, 500);
-      grad.addColorStop(0, 'rgba(0,0,0,0)');
-      grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
-      grad.addColorStop(1, 'rgba(0,0,0,0.85)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 340, 400, 160);
-
-      // Location title
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 6;
-      ctx.fillText(location.split(',')[0], 20, 470, 260);
-
-      // If user provided a photo, render a sleek circular traveler badge on the card
-      if (userPhoto) {
-        const userImg = new Image();
-        userImg.onload = () => {
+      if (portfolioPhoto) {
+        const uImg = new Image();
+        uImg.crossOrigin = 'anonymous';
+        uImg.onload = () => {
           if (!active) return;
-          ctx.save();
-          ctx.shadowColor = 'rgba(0,0,0,0.5)';
-          ctx.shadowBlur = 10;
-          ctx.beginPath();
-          ctx.arc(340, 440, 34, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fill();
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = '#FFFFFF';
-          ctx.stroke();
-          ctx.clip();
-          ctx.drawImage(userImg, 306, 406, 68, 68);
-          ctx.restore();
-
-          let finalUrl = destinationImg;
-          try {
-            finalUrl = canvas.toDataURL('image/jpeg', 0.85);
-          } catch {
-            // cross-origin canvas taint fallback
-          }
-          setCardInfo({ base64: finalUrl, location, info });
-          const newTex = new THREE.CanvasTexture(canvas);
-          newTex.minFilter = THREE.LinearMipmapLinearFilter;
-          newTex.generateMipmaps = true;
-          setTexture(newTex);
+          drawCard(uImg);
         };
-        userImg.src = userPhoto;
+        uImg.onerror = () => {
+          if (!active) return;
+          drawCard();
+        };
+        uImg.src = portfolioPhoto;
       } else {
-        let finalUrl = destinationImg;
-        try {
-          finalUrl = canvas.toDataURL('image/jpeg', 0.85);
-        } catch {
-          // cross-origin canvas taint fallback
-        }
-        setCardInfo({ base64: finalUrl, location, info });
-        const newTex = new THREE.CanvasTexture(canvas);
-        newTex.minFilter = THREE.LinearMipmapLinearFilter;
-        newTex.generateMipmaps = true;
-        setTexture(newTex);
+        drawCard();
       }
     };
 
     img.onerror = () => {
       if (!active) return;
-      new THREE.TextureLoader().setCrossOrigin('anonymous').load(destinationImg, (loadedTex) => {
-        if (!active) return;
-        loadedTex.minFilter = THREE.LinearMipmapLinearFilter;
-        loadedTex.generateMipmaps = true;
-        setTexture(loadedTex);
-      });
+      // Fallback texture
+      drawCard();
     };
 
     return () => {
       active = false;
     };
-  }, [index, userPhoto]);
+  }, [project, portfolioPhoto, customBadge]);
 
   useEffect(() => {
-    if (hovered && cardInfo && onHover) {
-      onHover(cardInfo.info);
+    if (hovered && onHover) {
+      onHover(project);
     }
-  }, [cardInfo, hovered, onHover]);
+  }, [hovered, project, onHover]);
 
   const rotationQuaternion = useMemo(() => {
     const dummy = new THREE.Object3D();
     dummy.position.copy(position);
-    // The local forward vector (+Z) points directly outward from center (0,0,0)
     dummy.lookAt(position.clone().multiplyScalar(2));
     return dummy.quaternion.clone();
   }, [position]);
 
   const geometry = useMemo(() => {
-    // 32x32 segments for smooth curving
-    // Scale the dimensions before applying the bend, so it sits perfectly curve-flush on the sphere
     const width = CARD_WIDTH * scale;
     const height = CARD_HEIGHT * scale;
     const geo = new THREE.PlaneGeometry(width, height, 32, 32);
     const pos = geo.attributes.position;
     
-    // Curve the plane to match the sphere's surface
+    // Curve the plane to match the sphere's surface curvature
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const y = pos.getY(i);
@@ -170,7 +228,6 @@ export default function Card({ index, position, scale = 1, userPhoto, onSelect, 
       
       const newX = GLOBE_RADIUS * Math.sin(theta) * Math.cos(phi);
       const newY = GLOBE_RADIUS * Math.sin(phi);
-      // Offset by GLOBE_RADIUS so its local center remains at (0,0,0)
       const newZ = GLOBE_RADIUS * Math.cos(theta) * Math.cos(phi) - GLOBE_RADIUS;
       
       pos.setXYZ(i, newX, newY, newZ);
@@ -188,17 +245,12 @@ export default function Card({ index, position, scale = 1, userPhoto, onSelect, 
       geometry={geometry} 
       onClick={(e) => {
         e.stopPropagation();
-        if (cardInfo) {
-          onSelect(cardInfo.base64, cardInfo.location, cardInfo.info);
-        }
+        onSelect(project);
       }}
       onPointerOver={(e) => {
         e.stopPropagation();
         setHovered(true);
         document.body.style.cursor = 'pointer';
-        if (cardInfo && onHover) {
-          onHover(cardInfo.info);
-        }
       }}
       onPointerOut={() => {
         setHovered(false);
@@ -208,7 +260,6 @@ export default function Card({ index, position, scale = 1, userPhoto, onSelect, 
         }
       }}
     >
-      {/* DoubleSide allows the interior views of the cards to be seen when passing through */}
       {texture && (
         <meshBasicMaterial 
           map={texture} 

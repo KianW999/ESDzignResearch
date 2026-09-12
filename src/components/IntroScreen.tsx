@@ -1,39 +1,29 @@
-import { Camera, Upload, ArrowRight } from 'lucide-react';
-import { useRef, useState } from 'react';
-
-declare global {
-  interface Window {
-    aistudio?: {
-      openSelectKey?: () => Promise<boolean | void>;
-    };
-  }
-}
+import { useState, useRef } from 'react';
+import { 
+  Building2, 
+  ArrowRight, 
+  Camera, 
+  Upload, 
+  Sparkles, 
+  Compass, 
+  CheckCircle2,
+  Layers
+} from 'lucide-react';
+import { PRESET_BADGES, BadgeOption } from '../data';
 
 interface IntroScreenProps {
-  onStart: (photoBase64: string) => void;
+  onStart: (photo: string | null, badge: string | null) => void;
 }
 
 export default function IntroScreen({ onStart }: IntroScreenProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<BadgeOption>(PRESET_BADGES[0]);
+  const [customPhoto, setCustomPhoto] = useState<string | null>(null);
+  const [useCamera, setUseCamera] = useState(false);
+  const [activeTab, setActiveTab] = useState<'preset' | 'custom'>('preset');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [useCamera, setUseCamera] = useState(false);
-  const [hasLinkedKey, setHasLinkedKey] = useState(false);
-
-  const handleStart = async (url: string) => {
-    // if (!hasLinkedKey) {
-    //   if (window.aistudio && window.aistudio.openSelectKey) {
-    //     const success = await window.aistudio.openSelectKey();
-    //     if (success !== false) {
-    //       setHasLinkedKey(true);
-    //       onStart(url);
-    //     }
-    //     return;
-    //   }
-    // }
-    onStart(url);
-  };
 
   const startCamera = async () => {
     try {
@@ -59,7 +49,7 @@ export default function IntroScreen({ onStart }: IntroScreenProps) {
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, w, h);
         const dataUrl = canvasRef.current.toDataURL('image/jpeg');
-        setPreviewUrl(dataUrl);
+        setCustomPhoto(dataUrl);
         stopCamera();
       }
     }
@@ -78,120 +68,195 @@ export default function IntroScreen({ onStart }: IntroScreenProps) {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setPreviewUrl(event.target?.result as string);
+        setCustomPhoto(event.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const loadTestImage = async () => {
-    try {
-      const res = await fetch('/new-test.png');
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      console.error('Failed to load test image', err);
+  const handleLaunch = () => {
+    if (activeTab === 'custom' && customPhoto) {
+      onStart(customPhoto, 'CUSTOM STUDIO STAMP');
+    } else {
+      onStart(null, selectedPreset.label);
     }
   };
 
   return (
-    <div className="flex flex-col items-center w-full h-full max-w-md mx-auto p-6 font-sans text-center overflow-y-auto">
-      <div className="flex-grow flex-shrink-0 flex flex-col items-center justify-center w-full py-4">
-        <h1 className={`text-[55px] font-bold font-display tracking-tight mb-2 text-gray-900 leading-none ${useCamera ? 'hidden' : previewUrl ? 'hidden md:block' : ''}`}>anywhere</h1>
-        <p className={`text-sm text-gray-500 mb-8 lowercase tracking-wide ${useCamera ? 'hidden' : previewUrl ? 'hidden md:block' : ''}`}>add your photos and visualize yourself anywhere</p>
+    <div className="flex flex-col items-center justify-center w-full h-full max-w-2xl mx-auto px-6 py-8 font-sans overflow-y-auto">
+      
+      {/* Brand Identity */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-slate-100 text-slate-800 text-xs font-mono font-medium tracking-wider uppercase border border-slate-200">
+          <Building2 className="w-3.5 h-3.5 text-slate-700" />
+          <span>Architectural Portfolio Exhibition</span>
+        </div>
         
-        {!previewUrl && !useCamera && (
-        <div className="flex flex-col gap-4 w-full">
-          <button 
-            onClick={startCamera}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 border border-solid border-gray-900 text-gray-900 bg-white hover:bg-gray-50 transition-colors uppercase tracking-widest text-sm font-medium rounded-none"
-          >
-            <Camera className="w-5 h-5" />
-            Click a photo
-          </button>
-          
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 border border-solid border-gray-900 text-gray-900 bg-white hover:bg-gray-50 transition-colors uppercase tracking-widest text-sm font-medium rounded-none"
-          >
-            <Upload className="w-5 h-5" />
-            Upload a photo
-          </button>
-          
-          <p className="mt-2 text-[10px] text-gray-400 text-center w-full">
-            By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition-colors">Prohibited Use Policy</a>.
-            <br /><br />
-            Please note that uploads from Google Workspace may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition-colors">terms</a>.
-          </p>
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-          />
-        </div>
-      )}
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-950 font-display mb-3">
+          WORKSPACE SPHERE
+        </h1>
+        
+        <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed">
+          An interactive 3D spherical gallery featuring <span className="text-slate-900 font-semibold">48 iconic office interior architectures</span>, workplace renovations, and in-depth ESG design dossiers.
+        </p>
+      </div>
 
-      {useCamera && !previewUrl && (
-        <div className="flex flex-col items-center gap-4 w-full">
-          <div className="relative w-full aspect-[3/4] max-h-[50vh] bg-gray-100 border border-gray-900 overflow-hidden rounded-none">
-            <video ref={videoRef} className="object-cover w-full h-full" playsInline muted />
+      {/* Office Visualization Configurator */}
+      <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-5 sm:p-6 mb-6">
+        
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">
+              Office Visualization
+            </div>
+            <div className="text-sm font-semibold text-slate-900">
+              Select Interior Portfolio Badge Stamp
+            </div>
           </div>
-          <button 
-            onClick={takePhoto}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 border border-solid border-gray-900 text-white bg-gray-900 hover:bg-black transition-colors uppercase tracking-widest text-sm font-medium rounded-none"
-          >
-            <Camera className="w-5 h-5" />
-            Capture Shape
-          </button>
-          <button 
-            onClick={stopCamera}
-            className="text-xs uppercase tracking-widest text-gray-500 hover:text-gray-900 mt-2"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
 
-      {previewUrl && (
-        <div className="flex flex-col items-center gap-6 w-full animate-in fade-in zoom-in duration-500">
-          <div className="w-48 aspect-[3/4] border border-gray-900 rounded-none overflow-hidden bg-gray-100">
-            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+          {/* Toggle between Curated Preset & Custom Photo Stamp */}
+          <div className="flex bg-slate-200/70 p-1 rounded-lg text-xs font-medium">
+            <button
+              onClick={() => { setActiveTab('preset'); stopCamera(); }}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeTab === 'preset' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Curated Badges
+            </button>
+            <button
+              onClick={() => setActiveTab('custom')}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeTab === 'custom' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Upload Stamp
+            </button>
           </div>
-          
-          <button 
-            onClick={() => handleStart(previewUrl)}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 border border-solid border-gray-900 text-white bg-gray-900 hover:bg-black transition-colors uppercase tracking-widest text-sm font-medium rounded-none"
-          >
-            Let's go
-            <ArrowRight className="w-5 h-5" />
-          </button>
-
-          <button 
-            onClick={() => setPreviewUrl(null)}
-            className="text-xs uppercase tracking-widest text-gray-500 hover:text-gray-900"
-          >
-            Start over
-          </button>
         </div>
-      )}
 
+        {activeTab === 'preset' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {PRESET_BADGES.map((preset) => {
+              const isSelected = selectedPreset.id === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => setSelectedPreset(preset)}
+                  className={`flex items-start gap-3 p-3 text-left rounded-xl border transition-all cursor-pointer ${
+                    isSelected 
+                      ? 'bg-white border-slate-900 ring-1 ring-slate-900 shadow-sm' 
+                      : 'bg-white/60 border-slate-200 hover:bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="p-2 rounded-lg bg-slate-100 text-slate-800 mt-0.5">
+                    {preset.iconType === 'leed' && <Sparkles className="w-4 h-4 text-emerald-600" />}
+                    {preset.iconType === 'biophilic' && <Building2 className="w-4 h-4 text-teal-600" />}
+                    {preset.iconType === 'acoustic' && <Layers className="w-4 h-4 text-indigo-600" />}
+                    {preset.iconType === 'minimal' && <Compass className="w-4 h-4 text-slate-600" />}
+                    {preset.iconType === 'studio' && <CheckCircle2 className="w-4 h-4 text-slate-900" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-900 tracking-wide font-mono">
+                      {preset.label}
+                    </div>
+                    <div className="text-[11px] text-slate-500 truncate">
+                      {preset.subtitle}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200">
+            {customPhoto ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-900 shadow-md">
+                  <img src={customPhoto} alt="Studio Stamp Preview" className="w-full h-full object-cover" />
+                </div>
+                <div className="text-xs font-mono font-medium text-slate-700">
+                  Custom Studio Stamp Ready
+                </div>
+                <button
+                  onClick={() => setCustomPhoto(null)}
+                  className="text-[11px] text-slate-500 hover:text-red-600 underline cursor-pointer"
+                >
+                  Remove / Change Photo
+                </button>
+              </div>
+            ) : useCamera ? (
+              <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+                <div className="w-full aspect-video bg-slate-900 rounded-lg overflow-hidden">
+                  <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+                </div>
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={takePhoto}
+                    className="flex-1 py-2 bg-slate-900 hover:bg-black text-white text-xs font-medium rounded-lg"
+                  >
+                    Capture Stamp
+                  </button>
+                  <button
+                    onClick={stopCamera}
+                    className="px-3 py-2 border border-slate-200 text-slate-600 text-xs rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 hover:border-slate-400 bg-white text-slate-800 text-xs font-medium rounded-lg transition-colors cursor-pointer w-full sm:w-auto"
+                >
+                  <Upload className="w-4 h-4 text-slate-600" />
+                  Upload Studio Logo / Photo
+                </button>
+                <button
+                  onClick={startCamera}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 hover:border-slate-400 bg-white text-slate-800 text-xs font-medium rounded-lg transition-colors cursor-pointer w-full sm:w-auto"
+                >
+                  <Camera className="w-4 h-4 text-slate-600" />
+                  Capture Webcam Stamp
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            )}
+            <p className="text-[11px] text-slate-400 text-center mt-3">
+              Your photo or studio mark will be stamped across all 48 interior cards in the 3D sphere.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Primary Enter Button */}
+      <div className="w-full flex flex-col items-center gap-3">
+        <button
+          onClick={handleLaunch}
+          className="w-full py-4 px-6 bg-slate-950 hover:bg-slate-900 text-white rounded-xl font-medium tracking-wide text-sm flex items-center justify-center gap-2.5 shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer"
+        >
+          <span>Explore 48 Curated Workspaces in 3D</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-center gap-4 text-slate-400 text-[11px] font-mono">
+          <span>48 Workspaces</span>
+          <span>•</span>
+          <span>Smooth Orbit Controls</span>
+          <span>•</span>
+          <span>Design Dossiers & ESG</span>
+        </div>
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
-
-      {previewUrl && (
-        <p className="mt-auto pt-8 text-[10px] text-gray-400 text-center w-full max-w-sm hidden md:block">
-          By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition-colors">Prohibited Use Policy</a>.
-          <br /><br />
-          Please note that uploads from Google Workspace may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition-colors">terms</a>.
-        </p>
-      )}
     </div>
   );
 }

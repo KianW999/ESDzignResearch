@@ -2,24 +2,31 @@ import { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GLOBE_RADIUS } from '../data';
+import { OfficeProject } from '../types';
 import Globe from './Globe';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-const DEFAULT_CAMERA_Z = isMobile ? 28.8 : 19.8;
+const DEFAULT_CAMERA_Z = isMobile ? 26.0 : 18.5;
 
 function CameraController({ targetZ }: { targetZ: React.MutableRefObject<number> }) {
   useFrame((state) => {
-    // Smooth camera Z penetration
+    // Smooth camera Z damping
     state.camera.position.z = THREE.MathUtils.lerp(
       state.camera.position.z, 
       targetZ.current, 
-      0.05
+      0.06
     );
   });
   return null;
 }
 
-export default function GalleryGlobe({ userPhoto, onSelect }: { userPhoto: string, onSelect: (image: string, location: string, info: string) => void }) {
+interface GalleryGlobeProps {
+  portfolioPhoto?: string | null;
+  customBadge?: string | null;
+  onSelect: (project: OfficeProject) => void;
+}
+
+export default function GalleryGlobe({ portfolioPhoto, customBadge, onSelect }: GalleryGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Interaction State Maps
@@ -33,35 +40,19 @@ export default function GalleryGlobe({ userPhoto, onSelect }: { userPhoto: strin
 
   // Cursor UI state
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [tooltipInfo, setTooltipInfo] = useState<string | null>(null);
+  const [hoveredProject, setHoveredProject] = useState<OfficeProject | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const parseTooltip = (info: string) => {
-    const lines = info.split('\n');
-    if (lines.length > 0) {
-      let firstLine = lines[0].trim();
-      if (firstLine.startsWith('#')) {
-        firstLine = firstLine.substring(1).trim();
-      }
-      return firstLine;
-    }
-    return '';
-  };
-
   useEffect(() => {
-    // Non-passive wheel event to capture pinch & scroll reliably outside React rendering
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       lastInteractionTime.current = Date.now();
       
       const delta = e.deltaY;
-      
-      // Scaling down zoom interaction slightly and applying
       targetZ.current += delta * 0.015;
       
-      // Clamp values so user can't zoom out infinitely.
-      // -GLOBE_RADIUS lets us see the inside-out opposite end of the sphere walls securely
-      targetZ.current = Math.max(-GLOBE_RADIUS * 0.8, Math.min(isMobile ? 35 : 28, targetZ.current));
+      // Clamp zoom range
+      targetZ.current = Math.max(-GLOBE_RADIUS * 0.7, Math.min(isMobile ? 36 : 28, targetZ.current));
     };
 
     const container = containerRef.current;
@@ -94,9 +85,8 @@ export default function GalleryGlobe({ userPhoto, onSelect }: { userPhoto: strin
     const deltaY = e.clientY - lastMouse.current.y;
     lastMouse.current = { x: e.clientX, y: e.clientY };
     
-    // Map screen cartesian coordinates to rotation
-    velocityState.current.y += deltaX * 0.005;
-    velocityState.current.x += deltaY * 0.005;
+    velocityState.current.y += deltaX * 0.004;
+    velocityState.current.x += deltaY * 0.004;
     
     lastInteractionTime.current = Date.now();
   };
@@ -110,41 +100,51 @@ export default function GalleryGlobe({ userPhoto, onSelect }: { userPhoto: strin
   return (
     <div 
       ref={containerRef}
-      className={`w-full h-full relative ${isMouseDown ? 'cursor-grabbing' : 'cursor-grab'}`}
+      className={`w-full h-full relative select-none ${isMouseDown ? 'cursor-grabbing' : 'cursor-grab'}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
-      {/* Background stays pure white */}
       <Canvas camera={{ position: [0, 0, DEFAULT_CAMERA_Z], fov: 45, near: 0.1 }}>
         <CameraController targetZ={targetZ} />
         <Suspense fallback={null}>
           <Globe 
-            userPhoto={userPhoto}
+            portfolioPhoto={portfolioPhoto}
+            customBadge={customBadge}
             rotationState={rotationState}
             velocityState={velocityState}
             isDragging={isDragging}
             lastInteraction={lastInteractionTime}
             onSelect={onSelect}
-            onHover={(info) => setTooltipInfo(parseTooltip(info))}
-            onHoverOut={() => setTooltipInfo(null)}
+            onHover={(proj) => setHoveredProject(proj)}
+            onHoverOut={() => setHoveredProject(null)}
           />
         </Suspense>
       </Canvas>
 
-      {/* Tooltip Overlay */}
-      {tooltipInfo && (
+      {/* Sleek Minimalist Architectural Tooltip */}
+      {hoveredProject && (
         <div
           ref={tooltipRef}
-          className="pointer-events-none fixed top-0 left-0 z-50 bg-black text-white px-4 py-2 rounded-full font-sans text-sm font-medium whitespace-nowrap shadow-xl"
+          className="pointer-events-none fixed top-0 left-0 z-50 bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-lg font-sans text-xs border border-white/10 shadow-2xl transition-opacity duration-150"
           style={{ 
-            borderRadius: '32px',
             willChange: 'transform',
             transform: `translate(${pointerPos.current.x + 16}px, ${pointerPos.current.y + 16}px)`
           }}
         >
-          {tooltipInfo}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-semibold text-sm tracking-tight text-white">{hoveredProject.name}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-medium">
+              {hoveredProject.badge}
+            </span>
+          </div>
+          <div className="text-slate-400 text-[11px]">
+            {hoveredProject.firm} · {hoveredProject.city}, {hoveredProject.country}
+          </div>
+          <div className="text-[10px] text-slate-500 mt-0.5">
+            Click to view interior design dossier
+          </div>
         </div>
       )}
     </div>

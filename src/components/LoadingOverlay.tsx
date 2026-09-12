@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const LOADING_TEXTS = [
-  "Generating your travel experience..."
+  "Assembling 3D workplace sphere...",
+  "Calibrating interior textures...",
+  "Loading 48 curated design dossiers..."
 ];
 
 export default function LoadingOverlay({ onComplete }: { onComplete: () => void }) {

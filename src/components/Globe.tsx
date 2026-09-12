@@ -3,29 +3,41 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { generateFibonacciSphere } from '../utils/math';
 import { GLOBE_RADIUS, TOTAL_CARDS } from '../data';
+import { OfficeProject } from '../types';
 import Card from './Card';
 
 interface GlobeProps {
-  userPhoto: string;
+  portfolioPhoto?: string | null;
+  customBadge?: string | null;
   rotationState: React.MutableRefObject<{ x: number, y: number }>;
   velocityState: React.MutableRefObject<{ x: number, y: number }>;
   isDragging: React.MutableRefObject<boolean>;
   lastInteraction: React.MutableRefObject<number>;
-  onSelect: (image: string, location: string, info: string) => void;
-  onHover?: (info: string) => void;
+  onSelect: (project: OfficeProject) => void;
+  onHover?: (project: OfficeProject) => void;
   onHoverOut?: () => void;
 }
 
-export default function Globe({ userPhoto, rotationState, velocityState, isDragging, lastInteraction, onSelect, onHover, onHoverOut }: GlobeProps) {
+export default function Globe({ 
+  portfolioPhoto, 
+  customBadge,
+  rotationState, 
+  velocityState, 
+  isDragging, 
+  lastInteraction, 
+  onSelect, 
+  onHover, 
+  onHoverOut 
+}: GlobeProps) {
   const groupRef = useRef<THREE.Group>(null);
   
-  // Precalculate the spherical grid positions and apply random scales
+  // Precalculate the spherical positions on Fibonacci sphere
   const cardData = useMemo(() => {
     const rawPositions = generateFibonacciSphere(TOTAL_CARDS, GLOBE_RADIUS);
     return rawPositions.map((pos) => ({
       position: pos,
-      // Random scale between 0.6x and 1.3x to make size uneven but keeping orientation
-      scale: 0.6 + Math.random() * 0.7 
+      // Subtle variations in card scale between 0.75x and 1.15x for dynamic architectural rhythm
+      scale: 0.8 + (Math.sin(pos.x * 2.5 + pos.y * 3.1) + 1) * 0.17
     }));
   }, []);
 
@@ -36,24 +48,23 @@ export default function Globe({ userPhoto, rotationState, velocityState, isDragg
     rotationState.current.x += velocityState.current.x;
     rotationState.current.y += velocityState.current.y;
 
-    // Limit X axis rotation (pitch) heavily to prevent gimbal lock or uncomfortable viewing
-    rotationState.current.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, rotationState.current.x));
+    // Limit X axis rotation (pitch) to prevent disorienting inversion
+    rotationState.current.x = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, rotationState.current.x));
 
     if (!isDragging.current) {
-      // Apply momentum decay (friction/damping)
-      velocityState.current.x *= 0.92;
-      velocityState.current.y *= 0.92;
+      // Apply momentum decay (friction damping)
+      velocityState.current.x *= 0.93;
+      velocityState.current.y *= 0.93;
 
       // Ambient Idle Rotation
-      if (Date.now() - lastInteraction.current > 2000) {
-        // Gently inject velocity for gradual smooth spinning
-        // This yields a steady state velocity of roughly 0.002 radians/frame
-        velocityState.current.y += 0.00015; 
+      if (Date.now() - lastInteraction.current > 1800) {
+        // Smooth architectural spin
+        velocityState.current.y += 0.00012; 
       }
     } else {
-      // While grabbed and dragging, velocity decays sharply unless actively fueled by delta pointer moves
-      velocityState.current.x *= 0.3;
-      velocityState.current.y *= 0.3;
+      // While grabbed, velocity decays faster unless actively moved
+      velocityState.current.x *= 0.35;
+      velocityState.current.y *= 0.35;
     }
 
     groupRef.current.rotation.x = rotationState.current.x;
@@ -68,10 +79,11 @@ export default function Globe({ userPhoto, rotationState, velocityState, isDragg
           index={i} 
           position={data.position} 
           scale={data.scale} 
-          userPhoto={userPhoto} 
-          onSelect={(img, loc, info) => {
+          portfolioPhoto={portfolioPhoto} 
+          customBadge={customBadge}
+          onSelect={(project) => {
             if (!isDragging.current) {
-              onSelect(img, loc, info);
+              onSelect(project);
             }
           }}
           onHover={onHover}

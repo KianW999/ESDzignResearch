@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { OFFICE_PROJECTS } from "./src/officeProjects";
 
 const PORT = 3000;
 
@@ -148,6 +149,11 @@ async function startServer() {
   const app = express();
   
   app.use(express.json({ limit: '50mb' }));
+
+  // API endpoint for retrieving curated 48 office interior projects
+  app.get("/api/office-projects", (req, res) => {
+    res.json({ success: true, projects: OFFICE_PROJECTS });
+  });
 
   // API endpoint for generating location card data
   app.post("/api/generate-location", async (req, res) => {
