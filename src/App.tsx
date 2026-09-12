@@ -44,7 +44,7 @@ export default function App() {
   }, [selectedProject]);
 
   return (
-    <div className="w-full h-full relative bg-slate-950 text-slate-100 overflow-hidden select-none font-sans">
+    <div className="fixed inset-0 w-full h-full min-h-screen bg-slate-950 text-slate-100 overflow-hidden select-none font-sans">
       {!isLaunched ? (
         <div className="absolute inset-0 flex items-center justify-center bg-white text-slate-900 z-50">
           <IntroScreen onStart={handleStart} />
