@@ -3,6 +3,19 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { CARD_WIDTH, CARD_HEIGHT, GLOBE_RADIUS, getOfficeProject } from '../data';
 import { OfficeProject } from '../types';
 
+function safeRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(x, y, w, h, r);
+  } else {
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+}
+
 interface CardProps {
   index: number;
   position: THREE.Vector3;
@@ -75,7 +88,7 @@ export default function Card({
       
       // Draw rounded rectangle for LinkedIN badge
       ctx.beginPath();
-      ctx.roundRect(16, 16, badgeW, badgeH, 5);
+      safeRoundRect(ctx, 16, 16, badgeW, badgeH, 5);
       ctx.fill();
 
       // LinkedIN Badge text
@@ -91,7 +104,7 @@ export default function Card({
 
       ctx.beginPath();
       ctx.fillStyle = '#25D366';
-      ctx.roundRect(contactX, 16, contactW, badgeH, 5);
+      safeRoundRect(ctx, contactX, 16, contactW, badgeH, 5);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
@@ -132,7 +145,7 @@ export default function Card({
       // Bottom-left boxed-up "contact" button
       ctx.beginPath();
       ctx.fillStyle = '#25D366';
-      ctx.roundRect(18, 467, 58, 20, 4);
+      safeRoundRect(ctx, 18, 467, 58, 20, 4);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
@@ -169,7 +182,7 @@ export default function Card({
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.roundRect(290, 438, 94, 26, 13);
+        safeRoundRect(ctx, 290, 438, 94, 26, 13);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#f8fafc';

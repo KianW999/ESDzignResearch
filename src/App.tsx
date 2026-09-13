@@ -16,9 +16,7 @@ import {
   X, 
   Building2, 
   ChevronRight,
-  Layers,
-  Grid,
-  Globe as GlobeIcon
+  Layers
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -278,29 +276,6 @@ export default function App() {
 
         {/* Right: Quick Tools & Directory Button */}
         <div className="pointer-events-auto flex items-center gap-2">
-          {/* View Mode Toggle: 3D Sphere vs 2D Grid */}
-          <button
-            onClick={() => setViewMode(viewMode === '3d' ? 'grid' : '3d')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border text-xs font-medium transition-colors shadow-xl cursor-pointer ${
-              viewMode === 'grid'
-                ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/30 text-emerald-300'
-                : 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-slate-200'
-            }`}
-            title={viewMode === '3d' ? "Switch to 2D Grid layout" : "Switch to 3D Globe view"}
-          >
-            {viewMode === '3d' ? (
-              <>
-                <Grid className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">2D Grid</span>
-              </>
-            ) : (
-              <>
-                <GlobeIcon className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">3D Sphere</span>
-              </>
-            )}
-          </button>
-
           {/* Open Directory Button */}
           <button
             onClick={() => setIsDirectoryOpen(true)}

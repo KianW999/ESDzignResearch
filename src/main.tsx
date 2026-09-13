@@ -49,7 +49,19 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
+// Explicitly cancel fallback timer and remove pre-hydration loader screen upon React bootstrap
+if (typeof window !== 'undefined') {
+  if ((window as any).__loaderTimer) {
+    clearTimeout((window as any).__loaderTimer);
+  }
+  const loaderEl = document.getElementById('initial-loader');
+  if (loaderEl) {
+    loaderEl.remove();
+  }
+}
+
+const rootElement = document.getElementById('root')!;
+createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
       <App />

@@ -8,11 +8,12 @@
     <meta name="description" content="A 3D spherical gallery of office interior design and workplace architectural portfolio viewing. Features smooth orbit controls, momentum dragging, 48 curated workspace interiors, custom interior badges, ESG context, and detailed design dossiers." />
     <meta property="og:description" content="A 3D spherical gallery of office interior design and workplace architectural portfolio viewing. Features smooth orbit controls, momentum dragging, 48 curated workspace interiors, custom interior badges, ESG context, and detailed design dossiers." />
     
-    <!-- GitHub Pages Canonicalization, SPA Router & Asset Recovery -->
+    <!-- GitHub Pages Canonicalization, SPA Router & Resilient Static Loader -->
     <script>
       (function() {
-        // 1. Single-page app query decoder (rafgraph/spa-github-pages protocol)
         var l = window.location;
+
+        // 1. Single-page app query decoder (rafgraph/spa-github-pages protocol)
         if (l.search && l.search[1] === '/') {
           var decoded = l.search.slice(1).split('&').map(function(s) { 
             return s.replace(/~and~/g, '&');
@@ -20,59 +21,56 @@
           window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
         }
 
-        // 2. Trailing slash corrector for repository subpaths on GitHub Pages
+        // 2. Trailing slash corrector for repository root URLs on GitHub Pages
+        // Ensures relative asset references (like ./assets/app.js) resolve against repo path, not host root
         var p = l.pathname;
-        if (p && !p.endsWith('/') && !p.split('/').pop().includes('.')) {
+        if (l.hostname.endsWith('github.io') && p && !p.endsWith('/') && !p.split('/').pop().includes('.')) {
           l.replace(l.protocol + '//' + l.host + p + '/' + l.search + l.hash);
           return;
         }
 
-        // 3. Uncompiled Source Detector:
-        // If someone deploys uncompiled root repo directly to GitHub Pages (deploy from branch / root),
-        // redirect seamlessly to the pre-compiled /docs/ directory where production assets exist.
-        if (l.hostname.endsWith('github.io') && !p.includes('/docs/')) {
-          var isSourceHtml = !!document.querySelector('script[src*="/src/main.tsx"]');
-          if (isSourceHtml) {
-            var clean = p.endsWith('/') ? p : p + '/';
-            l.replace(clean + 'docs/' + l.search + l.hash);
-            return;
+        // 3. Static Hosting Auto-Loader:
+        // If deployed to GitHub Pages (or static host) where raw /src/main.tsx cannot be compiled on-the-fly,
+        // automatically inject pre-compiled production CSS and JS bundles.
+        var isStaticHosting = l.hostname.endsWith('github.io') ||
+                              l.protocol === 'file:' ||
+                              (l.protocol === 'https:' && !l.hostname.includes('run.app') && l.hostname !== 'localhost');
+
+        if (isStaticHosting) {
+          window.__IS_STATIC_HOST__ = true;
+          var segments = p.split('/').filter(Boolean);
+          var repoName = (l.hostname.endsWith('github.io') && segments.length > 0 && segments[0] !== 'assets' && segments[0] !== 'docs') ? segments[0] : '';
+          var isDocs = segments.indexOf('docs') !== -1;
+          var basePath = repoName ? ('/' + repoName + (isDocs ? '/docs/' : '/')) : (p.endsWith('/') ? p : './');
+
+          // Load production CSS
+          if (!document.querySelector('link[href*="app.css"]')) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = basePath + 'assets/app.css';
+            document.head.appendChild(link);
+          }
+
+          // Load production JS bundle
+          if (!document.querySelector('script[data-app-bundle]')) {
+            var s = document.createElement('script');
+            s.type = 'module';
+            s.crossOrigin = 'anonymous';
+            s.setAttribute('data-app-bundle', 'true');
+            s.src = basePath + 'assets/app.js';
+            s.onerror = function() {
+              // Fallback to relative ./assets/app.js
+              var fb = document.createElement('script');
+              fb.type = 'module';
+              fb.crossOrigin = 'anonymous';
+              fb.setAttribute('data-app-bundle', 'fallback');
+              fb.src = './assets/app.js';
+              document.head.appendChild(fb);
+            };
+            document.head.appendChild(s);
           }
         }
       })();
-
-      // 4. Global Asset Recovery: If a relative asset request misses repository path, auto-correct and reload
-      window.addEventListener('error', function(e) {
-        var el = e.target;
-        if (el && (el.tagName === 'SCRIPT' || el.tagName === 'LINK')) {
-          var url = el.src || el.href;
-          if (url && url.includes('/assets/')) {
-            var pathname = window.location.pathname;
-            var segments = pathname.split('/').filter(Boolean);
-            if (segments.length > 0 && segments[0] !== 'assets') {
-              var repoName = segments[0];
-              if (!url.includes('/' + repoName + '/assets/')) {
-                var fileName = url.split('/assets/').pop();
-                var corrected = window.location.origin + '/' + repoName + '/assets/' + fileName;
-                if (el.tagName === 'SCRIPT' && !document.querySelector('script[data-recovered="' + fileName + '"]')) {
-                  var s = document.createElement('script');
-                  s.type = 'module';
-                  s.crossOrigin = 'anonymous';
-                  s.src = corrected;
-                  s.setAttribute('data-recovered', fileName);
-                  document.head.appendChild(s);
-                } else if (el.tagName === 'LINK' && !document.querySelector('link[data-recovered="' + fileName + '"]')) {
-                  var link = document.createElement('link');
-                  link.rel = 'stylesheet';
-                  link.crossOrigin = 'anonymous';
-                  link.href = corrected;
-                  link.setAttribute('data-recovered', fileName);
-                  document.head.appendChild(link);
-                }
-              }
-            }
-          }
-        }
-      }, true);
     </script>
   </head>
   <body style="background-color: #020617; color: #f8fafc; margin: 0; padding: 0; min-height: 100vh; overflow: hidden; font-family: system-ui, -apple-system, sans-serif;">
@@ -109,10 +107,12 @@
         }
       </style>
       <script>
-        setTimeout(function() {
+        window.__loaderTimer = setTimeout(function() {
           var help = document.getElementById('loader-help');
-          if (help) help.style.display = 'block';
-        }, 5000);
+          if (help && document.getElementById('initial-loader')) {
+            help.style.display = 'block';
+          }
+        }, 12000);
       </script>
     </div>
     <script type="module" src="/src/main.tsx"></script>
