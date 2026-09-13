@@ -4,12 +4,23 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
-  // Use relative base path by default ('./') so all compiled assets
-  // resolve correctly on GitHub Pages (project repos, user repos, custom domains, or subpaths)
-  // without white-screen path resolution errors.
+  // Determine optimal base path:
+  // 1. Explicit VITE_BASE (from deployment workflows)
+  // 2. GITHUB_REPOSITORY environment variable (auto-provided by GitHub Actions)
+  // 3. Default relative './'
   let base = './';
-  if (process.env.VITE_BASE && process.env.VITE_BASE !== '/') {
-    base = process.env.VITE_BASE.endsWith('/') ? process.env.VITE_BASE : `${process.env.VITE_BASE}/`;
+  if (process.env.VITE_BASE && process.env.VITE_BASE.trim() !== '') {
+    const raw = process.env.VITE_BASE.trim();
+    if (raw !== '/' && raw !== './') {
+      const cleaned = raw.replace(/\/+/g, '/');
+      base = cleaned.endsWith('/') ? cleaned : `${cleaned}/`;
+    }
+  } else if (process.env.GITHUB_REPOSITORY) {
+    const parts = process.env.GITHUB_REPOSITORY.split('/');
+    const repoName = parts[1];
+    if (repoName && !repoName.toLowerCase().endsWith('.github.io')) {
+      base = `/${repoName}/`;
+    }
   }
 
   return {

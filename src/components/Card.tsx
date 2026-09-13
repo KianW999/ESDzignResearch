@@ -129,10 +129,20 @@ export default function Card({
       ctx.fillText(project.name, 18, 458, 280);
       ctx.shadowBlur = 0;
 
-      // Typology & ESG info
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '400 11px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${project.typology} · ${project.year}`, 18, 480, 270);
+      // Bottom-left boxed-up "contact" button
+      ctx.beginPath();
+      ctx.fillStyle = '#25D366';
+      ctx.roundRect(18, 467, 58, 20, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
+      ctx.fillText('contact', 26, 481);
+
+      // Year text next to boxed-up contact button
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`· ${project.year}`, 84, 481);
 
       // Render custom interior badge / portfolio stamp if user provided
       if (userImgElement && userImgElement.complete) {
@@ -181,8 +191,15 @@ export default function Card({
     img.crossOrigin = 'anonymous';
     img.src = project.image;
 
+    const fallbackTimer = setTimeout(() => {
+      if (active && (!img.complete || img.naturalWidth === 0)) {
+        drawCard();
+      }
+    }, 2500);
+
     img.onload = () => {
       if (!active) return;
+      clearTimeout(fallbackTimer);
       if (portfolioPhoto) {
         const uImg = new Image();
         uImg.crossOrigin = 'anonymous';
@@ -202,12 +219,14 @@ export default function Card({
 
     img.onerror = () => {
       if (!active) return;
+      clearTimeout(fallbackTimer);
       // Fallback texture
       drawCard();
     };
 
     return () => {
       active = false;
+      clearTimeout(fallbackTimer);
     };
   }, [project, portfolioPhoto, customBadge]);
 
@@ -257,6 +276,21 @@ export default function Card({
       geometry={geometry} 
       onClick={(e) => {
         e.stopPropagation();
+        if (e.uv && e.uv.y > 0.88) {
+          if (e.uv.x < 0.28) {
+            window.open(project.linkedInLink || "https://www.linkedin.com/company/ESGrp", "_blank", "noopener,noreferrer");
+            return;
+          }
+          if (e.uv.x < 0.50) {
+            window.open(project.contactLink || "https://wa.me/60126185866", "_blank", "noopener,noreferrer");
+            return;
+          }
+        }
+        // Bottom-left boxed-up contact button (UV y is in bottom 12%, x < 0.30)
+        if (e.uv && e.uv.y < 0.12 && e.uv.x < 0.30) {
+          window.open(project.contactLink || "https://wa.me/60126185866", "_blank", "noopener,noreferrer");
+          return;
+        }
         onSelect(project);
       }}
       onPointerOver={(e) => {

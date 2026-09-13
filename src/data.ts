@@ -9,7 +9,14 @@ export const TOTAL_CARDS = 48;
 export { OFFICE_PROJECTS };
 
 export function getOfficeProject(index: number): OfficeProject {
-  return OFFICE_PROJECTS[index % OFFICE_PROJECTS.length];
+  const proj = OFFICE_PROJECTS[index % OFFICE_PROJECTS.length];
+  return {
+    ...proj,
+    badge: 'LinkedIN',
+    typology: 'contact',
+    linkedInLink: proj.linkedInLink || 'https://www.linkedin.com/company/ESGrp',
+    contactLink: proj.contactLink || 'https://wa.me/60126185866',
+  };
 }
 
 // Preset studio stamp / badge options for visualization

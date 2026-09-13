@@ -16,7 +16,9 @@ import {
   X, 
   Building2, 
   ChevronRight,
-  Layers
+  Layers,
+  Grid,
+  Globe as GlobeIcon
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -28,11 +30,28 @@ const CATEGORIES = [
   "High ESG / Net Zero"
 ];
 
+function checkWebGLSupport(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(
+      window.WebGLRenderingContext && 
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
   const [selectedProject, setSelectedProject] = useState<OfficeProject | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [resetSignal, setResetSignal] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // WebGL support and View mode ('3d' or 'grid')
+  const [hasWebGL] = useState(() => checkWebGLSupport());
+  const [viewMode, setViewMode] = useState<'3d' | 'grid'>(() => checkWebGLSupport() ? '3d' : 'grid');
   
   // Search & Directory Drawer State
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
@@ -117,22 +136,123 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 w-full h-full min-h-screen bg-slate-950 text-slate-100 overflow-hidden select-none font-sans">
-      {/* 3D Spherical Gallery Globe - Loaded straight away */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ 
-          opacity: selectedProject ? 0.3 : 1, 
-          scale: selectedProject ? 0.88 : 1 
-        }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className={`absolute inset-0 ${selectedProject ? 'pointer-events-none' : ''}`}
-      >
-        <GalleryGlobe 
-          autoRotate={autoRotate}
-          resetSignal={resetSignal}
-          onSelect={(project) => setSelectedProject(project)} 
-        />
-      </motion.div>
+      {/* View Container: 3D Globe or 2D Gallery Grid */}
+      {viewMode === '3d' && hasWebGL ? (
+        <motion.div 
+          key="globe-view"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ 
+            opacity: selectedProject ? 0.3 : 1, 
+            scale: selectedProject ? 0.88 : 1 
+          }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className={`absolute inset-0 ${selectedProject ? 'pointer-events-none' : ''}`}
+        >
+          <GalleryGlobe 
+            autoRotate={autoRotate}
+            resetSignal={resetSignal}
+            onSelect={(project) => setSelectedProject(project)} 
+          />
+        </motion.div>
+      ) : (
+        <motion.div 
+          key="grid-view"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="absolute inset-0 pt-20 pb-16 px-4 sm:px-8 overflow-y-auto z-10"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                  <span>48 Curated Workplace Architectures</span>
+                  <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                    All Portfolios
+                  </span>
+                </h1>
+                <p className="text-xs text-slate-400 mt-1 font-mono">
+                  Select any workspace portfolio to explore the complete design dossier and ESG metrics
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {OFFICE_PROJECTS.map((project, idx) => (
+                <div
+                  key={project.id}
+                  onClick={() => setSelectedProject(project)}
+                  className="group relative bg-slate-900/90 rounded-xl overflow-hidden border border-white/10 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex flex-col"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-slate-950">
+                    <img 
+                      src={project.image} 
+                      alt={project.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent" />
+
+                    {/* Top-Left Badges: LinkedIN button and contact button */}
+                    <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
+                      <a
+                        href={project.linkedInLink || "https://www.linkedin.com/company/ESGrp"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0A66C2] hover:bg-[#004182] text-white text-[10px] font-bold rounded-md shadow-md cursor-pointer transition-transform hover:scale-105"
+                        title="LinkedIN (https://www.linkedin.com/company/ESGrp)"
+                      >
+                        LinkedIN
+                      </a>
+                      <a
+                        href={project.contactLink || "https://wa.me/60126185866"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#25D366] hover:bg-[#20bd5a] text-white text-[10px] font-bold rounded-md shadow-md cursor-pointer transition-transform hover:scale-105"
+                        title="Contact on WhatsApp"
+                      >
+                        contact
+                      </a>
+                    </div>
+
+                    {/* Index pill */}
+                    <div className="absolute top-3 right-3 z-10 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-mono text-emerald-400 border border-white/10">
+                      #{String(idx + 1).padStart(2, '0')}
+                    </div>
+
+                    {/* Bottom overlay inside photo */}
+                    <div className="absolute bottom-3 left-3 right-3 z-10">
+                      <div className="text-[11px] font-medium text-slate-300 truncate">
+                        {project.firm}
+                      </div>
+                      <div className="text-base font-bold text-white tracking-tight leading-tight truncate">
+                        {project.name}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <a
+                          href={project.contactLink || "https://wa.me/60126185866"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-block px-2 py-0.5 bg-[#25D366] hover:bg-[#20bd5a] text-white text-[10px] font-bold rounded shadow-sm transition-transform hover:scale-105"
+                          title="Contact on WhatsApp"
+                        >
+                          contact
+                        </a>
+                        <span className="text-[10px] text-slate-300 font-mono truncate">
+                          {project.city}, {project.country} · {project.year}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Top Architectural HUD Bar */}
       <header className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-5 flex items-center justify-between pointer-events-none">
@@ -158,6 +278,29 @@ export default function App() {
 
         {/* Right: Quick Tools & Directory Button */}
         <div className="pointer-events-auto flex items-center gap-2">
+          {/* View Mode Toggle: 3D Sphere vs 2D Grid */}
+          <button
+            onClick={() => setViewMode(viewMode === '3d' ? 'grid' : '3d')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border text-xs font-medium transition-colors shadow-xl cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/30 text-emerald-300'
+                : 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-slate-200'
+            }`}
+            title={viewMode === '3d' ? "Switch to 2D Grid layout" : "Switch to 3D Globe view"}
+          >
+            {viewMode === '3d' ? (
+              <>
+                <Grid className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">2D Grid</span>
+              </>
+            ) : (
+              <>
+                <GlobeIcon className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">3D Sphere</span>
+              </>
+            )}
+          </button>
+
           {/* Open Directory Button */}
           <button
             onClick={() => setIsDirectoryOpen(true)}
@@ -171,27 +314,31 @@ export default function App() {
             </span>
           </button>
 
-          {/* Toggle Auto Rotation */}
-          <button
-            onClick={() => setAutoRotate(!autoRotate)}
-            className={`p-2 rounded-xl backdrop-blur-md border transition-colors shadow-xl cursor-pointer ${
-              autoRotate 
-                ? 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-emerald-400' 
-                : 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-slate-400'
-            }`}
-            title={autoRotate ? "Pause rotation" : "Resume auto-rotation"}
-          >
-            {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          </button>
+          {/* Toggle Auto Rotation (only in 3D mode) */}
+          {viewMode === '3d' && (
+            <button
+              onClick={() => setAutoRotate(!autoRotate)}
+              className={`p-2 rounded-xl backdrop-blur-md border transition-colors shadow-xl cursor-pointer ${
+                autoRotate 
+                  ? 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-emerald-400' 
+                  : 'bg-slate-900/85 hover:bg-slate-800 border-white/10 text-slate-400'
+              }`}
+              title={autoRotate ? "Pause rotation" : "Resume auto-rotation"}
+            >
+              {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+          )}
 
-          {/* Reset Orbit View */}
-          <button
-            onClick={handleResetView}
-            className="p-2 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-xl border border-white/10 transition-colors shadow-xl cursor-pointer"
-            title="Recenter camera view"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
+          {/* Reset Orbit View (only in 3D mode) */}
+          {viewMode === '3d' && (
+            <button
+              onClick={handleResetView}
+              className="p-2 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-xl border border-white/10 transition-colors shadow-xl cursor-pointer"
+              title="Recenter camera view"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
 
           {/* Fullscreen Toggle */}
           <button
@@ -339,18 +486,25 @@ export default function App() {
                             {project.firm}
                           </div>
                           <div className="mt-1 flex items-center gap-1.5">
-                            <span className="inline-block px-1.5 py-0.5 rounded bg-[#0A66C2]/20 text-[#38bdf8] font-semibold text-[9px]">
-                              {project.badge}
-                            </span>
+                            <a
+                              href={project.linkedInLink || "https://www.linkedin.com/company/ESGrp"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-block px-1.5 py-0.5 rounded bg-[#0A66C2]/20 hover:bg-[#0A66C2]/40 text-[#38bdf8] hover:text-white font-semibold text-[9px] transition-colors cursor-pointer"
+                              title="LinkedIN (https://www.linkedin.com/company/ESGrp)"
+                            >
+                              LinkedIN
+                            </a>
                             <a
                               href={project.contactLink || "https://wa.me/60126185866"}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-block px-1.5 py-0.5 rounded bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#4ade80] font-semibold text-[9px] transition-colors cursor-pointer"
-                              title="WhatsApp wa.me/60126185866"
+                              className="inline-block px-1.5 py-0.5 rounded bg-[#25D366]/20 hover:bg-[#25D366]/40 text-[#4ade80] hover:text-white font-semibold text-[9px] transition-colors cursor-pointer"
+                              title="Contact on WhatsApp"
                             >
-                              {project.typology}
+                              contact
                             </a>
                           </div>
                         </div>

@@ -110,24 +110,24 @@ export default function LocationDetailsScreen({
           {/* Top Architectural Badge: LinkedIN button & contact button */}
           <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
             <a
-              href="https://www.linkedin.com"
+              href={project.linkedInLink || "https://www.linkedin.com/company/ESGrp"}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0A66C2] hover:bg-[#004182] text-white text-[11px] font-bold tracking-wide rounded-md transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-              title="Open LinkedIN"
+              title="Open LinkedIn (https://www.linkedin.com/company/ESGrp)"
             >
               <Linkedin className="w-3.5 h-3.5 text-white fill-current" />
-              <span>{project.badge || "LinkedIN"}</span>
+              <span>LinkedIN</span>
             </a>
             <a
               href={project.contactLink || "https://wa.me/60126185866"}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] font-bold tracking-wide rounded-md shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              title="Contact on WhatsApp (wa.me/60126185866)"
+              title="Contact on WhatsApp"
             >
               <MessageCircle className="w-3.5 h-3.5 text-white fill-current" />
-              <span>{project.typology || "contact"}</span>
+              <span>contact</span>
             </a>
           </div>
 
@@ -277,17 +277,27 @@ export default function LocationDetailsScreen({
           </div>
 
           {/* Action Footer */}
-          <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+          <div className="pt-6 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
+              <a
+                href={project.linkedInLink || "https://www.linkedin.com/company/ESGrp"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] font-semibold rounded-lg transition-colors cursor-pointer border border-[#0A66C2]/30"
+                title="LinkedIn (https://www.linkedin.com/company/ESGrp)"
+              >
+                <Linkedin className="w-3.5 h-3.5 text-[#0A66C2] fill-current" />
+                <span>LinkedIN</span>
+              </a>
               <a
                 href={project.contactLink || "https://wa.me/60126185866"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] font-semibold rounded-lg transition-colors cursor-pointer border border-[#25D366]/30"
-                title="WhatsApp wa.me/60126185866"
+                title="Contact on WhatsApp"
               >
                 <MessageCircle className="w-3.5 h-3.5 text-[#128C7E]" />
-                <span>contact (wa.me/60126185866)</span>
+                <span>contact</span>
               </a>
               <span className="text-[11px] text-slate-400 font-mono">
                 {project.year}
